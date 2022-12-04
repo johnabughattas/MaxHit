@@ -31,64 +31,51 @@ function MaxHit:OnDisable()
 end
 
 function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
-    local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
+    local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, spellSchool, amount = CombatLogGetCurrentEventInfo()
 
     -- ignore combat log events that are not damage or where the source is not the player
     if (subevent ~= "SWING_DAMAGE" and subevent ~= "SPELL_DAMAGE") or sourceGUID ~= player_id then
         return
     end
 
-    if subevent == "SPELL_DAMAGE" then
-        local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = CombatLogGetCurrentEventInfo()
-        
-        if self.db.profile.maxHit[1] == nil then
+    if self.db.profile.maxHit[1] == nil then
+        if subevent == "SPELL_DAMAGE" then
             self.db.profile.maxHit[1] = {
                 hitAmount = amount,
-                spell = spellName,
-                creature = destName
+                creature = destName,
+                spell = spellName
             } 
-
-            self:Print("New max hit of "..amount.." against "..destName.."!")
-            return
-        end
-
-        if amount > self.db.profile.maxHit[1]["hitAmount"] then
-            self.db.profile.maxHit[1]["hitAmount"] = amount
-            self.db.profile.maxHit[1]["creature"] = destName
-            self.db.profile.maxHit[1]["spell"] = spellName
-            self.db.profile.hitCounter = self.db.profile.hitCounter + 1
-
-            self:Print("New max hit of "..amount.." against "..destName.."!")
-            return
-    end
-end
-
-    if subevent == "SWING_DAMAGE" then
-        local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = CombatLogGetCurrentEventInfo()
-        
-        if self.db.profile.maxHit[1] == nil then
+  
+        else
             self.db.profile.maxHit[1] = {
                 hitAmount = amount,
                 spell = "auto-attack",
                 creature = destName
             } 
 
-            self:Print("New max hit of "..amount.." against "..destName.."!")
-            return
-        end
+        self:Print("New max hit of "..amount.." against "..destName.."!")
+        return
+    end
 
-        if amount > self.db.profile.maxHit[1]["hitAmount"] then
-            self.db.profile.maxHit[1]["hitAmount"] = amount
-            self.db.profile.maxHit[1]["creature"] = destName
+
+    if amount > self.db.profile.maxHit[1]["hitAmount"] then
+        self.db.profile.maxHit[1]["hitAmount"] = amount
+        self.db.profile.maxHit[1]["creature"] = destName
+ 
+        if subevent == "SPELL_DAMAGE" then
+            self.db.profile.maxHit[1]["spell"] = spellName
+        else 
             self.db.profile.maxHit[1]["spell"] = "auto-attack"
-            self.db.profile.hitCounter = self.db.profile.hitCounter + 1
 
-            self:Print("New max hit of "..amount.." against "..destName.."!")
-            return
+        self.db.profile.hitCounter = self.db.profile.hitCounter + 1
+        self:Print("New max hit of "..amount.." against "..destName.."!")
+        return
     end
 end
+end
+end
 
-end 
+
 
 -- prints users max hit when they use the slash command /maxhit
 function MaxHit:SlashCommand()
@@ -99,4 +86,5 @@ function MaxHit:SlashCommand()
 
 	self:Print('Max hit is '..self.db.profile.maxHit[1]["hitAmount"].." against "..self.db.profile.maxHit[1]["creature"].." using "..self.db.profile.maxHit[1]["spell"])
 end
+
 
