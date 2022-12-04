@@ -3,9 +3,8 @@ MaxHit = LibStub("AceAddon-3.0"):NewAddon("MaxHit", "AceEvent-3.0", "AceConsole-
 
 local defaults = {
 	profile = {
-		MaxHit = {0},
-		spell = "",
-        creature = ""
+		maxHit = {},
+        hitCounter = 1
 	},
 }
 
@@ -13,20 +12,17 @@ function MaxHit:OnInitialize()
     -- load database from previous play sessions
     self.db = LibStub("AceDB-3.0"):New("MaxHitDB", defaults, true)
 
-  
-
-    -- gets the player's name and id, and greets them upon login
+    -- get the player's name and id, and greets them upon login
     player_name = UnitName('player')
     player_id = UnitGUID('player')
     self:Print("Hello, ".. player_name)
-
 end
 
 function MaxHit:OnEnable()
-    -- enables listener for combat isntances
+    -- enable listener for combat isntances
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    --self.db.profile.MaxHit[0] = 0
-    -- enables slash commands (function defined below)
+
+    -- enable slash commands (function defined below)
     self:RegisterChatCommand("maxhit", "SlashCommand")
 end
 
@@ -44,23 +40,51 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
 
     if subevent == "SPELL_DAMAGE" then
         local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = CombatLogGetCurrentEventInfo()
-    
-        if amount > self.db.profile.MaxHit[1] then
-            self.db.profile.MaxHit[1] = amount
-            self.db.profile.creature = destName
-            self.db.profile.spell = spellName
+        
+        if self.db.profile.maxHit[1] == nil then
+            self.db.profile.maxHit[1] = {
+                hitAmount = amount,
+                spell = spellName,
+                creature = destName
+            } 
+
             self:Print("New max hit of "..amount.." against "..destName.."!")
+            return
+        end
+
+        if amount > self.db.profile.maxHit[1]["hitAmount"] then
+            self.db.profile.maxHit[1]["hitAmount"] = amount
+            self.db.profile.maxHit[1]["creature"] = destName
+            self.db.profile.maxHit[1]["spell"] = spellName
+            self.db.profile.hitCounter = self.db.profile.hitCounter + 1
+
+            self:Print("New max hit of "..amount.." against "..destName.."!")
+            return
     end
 end
 
     if subevent == "SWING_DAMAGE" then
         local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = CombatLogGetCurrentEventInfo()
+        
+        if self.db.profile.maxHit[1] == nil then
+            self.db.profile.maxHit[1] = {
+                hitAmount = amount,
+                spell = "auto-attack",
+                creature = destName
+            } 
 
-        if amount > self.db.profile.MaxHit[1] then
-            self.db.profile.MaxHit[1] = amount
-            self.db.profile.creature = destName
-            self.db.profile.spell = "auto-attack"
             self:Print("New max hit of "..amount.." against "..destName.."!")
+            return
+        end
+
+        if amount > self.db.profile.maxHit[1]["hitAmount"] then
+            self.db.profile.maxHit[1]["hitAmount"] = amount
+            self.db.profile.maxHit[1]["creature"] = destName
+            self.db.profile.maxHit[1]["spell"] = "auto-attack"
+            self.db.profile.hitCounter = self.db.profile.hitCounter + 1
+
+            self:Print("New max hit of "..amount.." against "..destName.."!")
+            return
     end
 end
 
@@ -68,6 +92,11 @@ end
 
 -- prints users max hit when they use the slash command /maxhit
 function MaxHit:SlashCommand()
-	self:Print('Max hit is '..self.db.profile.MaxHit[1].." against "..self.db.profile.creature.." using "..self.db.profile.spell)
+    if self.db.profile.maxHit[1] == nil then
+        self:Print("No max hit on record! Go slay some villains!")
+        return
+    end
+
+	self:Print('Max hit is '..self.db.profile.maxHit[1]["hitAmount"].." against "..self.db.profile.maxHit[1]["creature"].." using "..self.db.profile.maxHit[1]["spell"])
 end
 
