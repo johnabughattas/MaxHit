@@ -1,0 +1,10 @@
+## Interface: 100002
+## Title: Max Hit
+## Notes: A WoW Retail Addon to Track Largest Hit by a Player
+## Author: John Abughattas
+## Version: 0.1
+## OptionalDeps: Ace3
+## SavedVariables: MaxHitDB
+
+embeds.xml
+MaxHit.lua
