@@ -33,30 +33,21 @@ end
 function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, spellSchool, amount = CombatLogGetCurrentEventInfo()
 
-    -- ignore combat log events that are not damage or where the source is not the player
-    if (subevent ~= "SWING_DAMAGE" and subevent ~= "SPELL_DAMAGE") or sourceGUID ~= player_id then
+    -- ignore combat log events that are not damage, where the source is not the player, or the attack missed
+    if (subevent ~= "SWING_DAMAGE" and subevent ~= "SPELL_DAMAGE") or sourceGUID ~= player_id or amount == nil then
         return
     end
 
     if self.db.profile.maxHit[1] == nil then
-        if subevent == "SPELL_DAMAGE" then
-            self.db.profile.maxHit[1] = {
-                hitAmount = amount,
-                creature = destName,
-                spell = spellName
-            } 
-  
-        else
-            self.db.profile.maxHit[1] = {
-                hitAmount = amount,
-                spell = "auto-attack",
-                creature = destName
-            } 
+        self.db.profile.maxHit[1] = {
+            hitAmount = amount,
+            creature = destName,
+            spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
+        } 
 
-        self:Print("New max hit of "..amount.." against "..destName.."!")
+        self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[1]["spell"].."!")
         return
     end
-
 
     if amount > self.db.profile.maxHit[1]["hitAmount"] then
         self.db.profile.maxHit[1]["hitAmount"] = amount
@@ -64,26 +55,30 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
  
         if subevent == "SPELL_DAMAGE" then
             self.db.profile.maxHit[1]["spell"] = spellName
-        else 
+        else
             self.db.profile.maxHit[1]["spell"] = "auto-attack"
+        end
 
         self.db.profile.hitCounter = self.db.profile.hitCounter + 1
         self:Print("New max hit of "..amount.." against "..destName.."!")
+
         return
+
     end
 end
-end
-end
+
 
 
 
 -- prints users max hit when they use the slash command /maxhit
 function MaxHit:SlashCommand()
+    self.db.profile.maxHit[1] = nil
     if self.db.profile.maxHit[1] == nil then
         self:Print("No max hit on record! Go slay some villains!")
         return
     end
 
+    
 	self:Print('Max hit is '..self.db.profile.maxHit[1]["hitAmount"].." against "..self.db.profile.maxHit[1]["creature"].." using "..self.db.profile.maxHit[1]["spell"])
 end
 
