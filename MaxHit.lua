@@ -3,19 +3,25 @@ MaxHit = LibStub("AceAddon-3.0"):NewAddon("MaxHit", "AceEvent-3.0", "AceConsole-
 
 local defaults = {
 	profile = {
-		maxHit = {}
+		maxHit = {},
+        character_name = nil,
+        character_id = nil;
 	},
 }
 
+
+
 function MaxHit:OnInitialize()
     -- load database from previous play sessions
-    self.db = LibStub("AceDB-3.0"):New("MaxHitDB", defaults, true)
+    self.db = LibStub("AceDB-3.0"):New("MaxHitDB", defaults)
+
 
     -- get the player's name and id, and greets them upon login
-    player_name = UnitName('player')
-    player_id = UnitGUID('player')
-    self:Print("Hello, ".. player_name)
+    self.db.profile.character_name = UnitName('player')
+    self.db.profile.character_id = UnitGUID('player')
+    self:Print("Hello, ".. self.db.profile.character_name)
 end
+
 
 function MaxHit:OnEnable()
     -- enable listener for combat isntances
@@ -35,41 +41,23 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, spellSchool, amount = CombatLogGetCurrentEventInfo()
 
     -- ignore combat log events that are not damage, where the source is not the player, or the attack missed
-    if (subevent ~= "SWING_DAMAGE" and subevent ~= "SPELL_DAMAGE") or sourceGUID ~= player_id or amount == nil then
+    if (subevent ~= "SWING_DAMAGE" and subevent ~= "SPELL_DAMAGE") or sourceGUID ~= self.db.profile.character_id or amount == nil then
         return
     end
 
     -- if there is no attack currently stored, store this one as the max and alert the player
-    if self.db.profile.maxHit[1] == nil then
-        self.db.profile.maxHit[1] = {
-            hitAmount = amount,
-            creature = destName,
-            spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
-        } 
-        self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[1]["spell"].."!")
-        return
-
-    else if self.db.profile.maxHit[2] == nil then
-        self.db.profile.maxHit[2] = {
-            hitAmount = amount,
-            creature = destName,
-            spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
-        } 
-
-        self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[1]["spell"].."!")
-        return
-    else if self.db.profile.maxHit[3] == nil then
-        self.db.profile.maxHit[3] = {
-            hitAmount = amount,
-            creature = destName,
-            spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
-        } 
-        self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[1]["spell"].."!")
-        return
-    end
+    for i = 1, 3, 1 
+    do
+        if self.db.profile.maxHit[i] == nil then
+            self.db.profile.maxHit[i] = {
+                hitAmount = amount,
+                creature = destName,
+                spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
+            } 
+            self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+            return
     end
 end
-
 
     -- if this attack is greater than the current max, store it and alert the player
     if amount > self.db.profile.maxHit[1]["hitAmount"] then
@@ -119,9 +107,13 @@ end
 -- prints users max hits when they use the slash command /maxhit
 function MaxHit:SlashCommand()
    --self.db.profile.maxHit = nil
-    if self.db.profile.maxHit == nil then
-        self:Print("No max hit on record! Go slay some villains!")
-        return
+   for i = 1, 3, 1 
+   do
+        if self.db.profile.maxHit[i] == nil then
+            self:Print(i)
+            self:Print("No max hit on record! Go slay some villains!")
+            return
+        end
     end
 
 	self:Print('Max hit is '..self.db.profile.maxHit[1]["hitAmount"].." against "..self.db.profile.maxHit[1]["creature"].." using "..self.db.profile.maxHit[1]["spell"])
