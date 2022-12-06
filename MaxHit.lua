@@ -59,13 +59,13 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
             } 
 
                 if i == 1 then
-                    self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+                    self:Print("New max hit of "..reformatInt(amount).." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
                     return
                 else if i == 2 then
-                    self:Print("New 2nd best hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+                    self:Print("New 2nd best hit of "..reformatInt(amount).." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
                     return
                 else if i == 3 then
-                    self:Print("New 3rd best hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+                    self:Print("New 3rd best hit of "..reformatInt(amount).." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
                     return
                 end
                 end
@@ -87,13 +87,13 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
             end
 
             if i == 1 then
-                self:Print("New max hit of "..amount.." against "..destName.."!")
+                self:Print("New max hit of "..reformatInt(amount).." against "..destName.."!")
                 return
             else if i ==2 then
-                self:Print("New 2nd best hit of "..amount.." against "..destName.."!")
+                self:Print("New 2nd best hit of "..reformatInt(amount).." against "..destName.."!")
                 return
             else if i == 3 then
-                self:Print("New 3rd best hit of "..amount.." against "..destName.."!")
+                self:Print("New 3rd best hit of "..reformatInt(amount).." against "..destName.."!")
                 return
             end
             end
