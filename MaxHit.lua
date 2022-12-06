@@ -9,7 +9,10 @@ local defaults = {
 	},
 }
 
-
+-- helper function for printing our max hit values
+function reformatInt(i)
+    return tostring(i):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
+end
 
 function MaxHit:OnInitialize()
     -- load database from previous play sessions
@@ -54,55 +57,50 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
                 creature = destName,
                 spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
             } 
-            self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
-            return
+
+                if i == 1 then
+                    self:Print("New max hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+                    return
+                else if i == 2 then
+                    self:Print("New 2nd best hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+                    return
+                else if i == 3 then
+                    self:Print("New 3rd best hit of "..amount.." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
+                    return
+                end
+                end
+                end
+        end
     end
-end
 
     -- if this attack is greater than the current max, store it and alert the player
-    if amount > self.db.profile.maxHit[1]["hitAmount"] then
-        self.db.profile.maxHit[1]["hitAmount"] = amount
-        self.db.profile.maxHit[1]["creature"] = destName
- 
-        if subevent == "SPELL_DAMAGE" then
-            self.db.profile.maxHit[1]["spell"] = spellName
-        else
-            self.db.profile.maxHit[1]["spell"] = "auto-attack"
-        end
-
-        self:Print("New max hit of "..amount.." against "..destName.."!")
-        return
-
-    else if amount > self.db.profile.maxHit[2]["hitAmount"] then
-        self.db.profile.maxHit[2]["hitAmount"] = amount
-        self.db.profile.maxHit[2]["creature"] = destName
+    for i = 1, 3, 1
+    do
+        if amount > self.db.profile.maxHit[i]["hitAmount"] then
+            self.db.profile.maxHit[i]["hitAmount"] = amount
+            self.db.profile.maxHit[i]["creature"] = destName
     
-        if subevent == "SPELL_DAMAGE" then
-            self.db.profile.maxHit[2]["spell"] = spellName
-        else
-            self.db.profile.maxHit[2]["spell"] = "auto-attack"
-        end
+            if subevent == "SPELL_DAMAGE" then
+                self.db.profile.maxHit[i]["spell"] = spellName
+            else
+                self.db.profile.maxHit[i]["spell"] = "auto-attack"
+            end
 
-        self:Print("New max hit of "..amount.." against "..destName.."!")
-        return
-    
-    else if amount > self.db.profile.maxHit[3]["hitAmount"] then
-        self.db.profile.maxHit[3]["hitAmount"] = amount
-        self.db.profile.maxHit[3]["creature"] = destName
-    
-        if subevent == "SPELL_DAMAGE" then
-            self.db.profile.maxHit[3]["spell"] = spellName
-        else
-            self.db.profile.maxHit[3]["spell"] = "auto-attack"
+            if i == 1 then
+                self:Print("New max hit of "..amount.." against "..destName.."!")
+                return
+            else if i ==2 then
+                self:Print("New 2nd best hit of "..amount.." against "..destName.."!")
+                return
+            else if i == 3 then
+                self:Print("New 3rd best hit of "..amount.." against "..destName.."!")
+                return
+            end
+            end
+            end
         end
-
-        self:Print("New max hit of "..amount.." against "..destName.."!")
-        return
-    end 
     end
 end
-end
-
 
 -- prints users max hits when they use the slash command /maxhit
 function MaxHit:SlashCommand()
@@ -110,15 +108,25 @@ function MaxHit:SlashCommand()
    for i = 1, 3, 1 
    do
         if self.db.profile.maxHit[i] == nil then
-            self:Print(i)
             self:Print("No max hit on record! Go slay some villains!")
             return
         end
     end
 
-	self:Print('Max hit is '..self.db.profile.maxHit[1]["hitAmount"].." against "..self.db.profile.maxHit[1]["creature"].." using "..self.db.profile.maxHit[1]["spell"])
-    self:Print('Second best hit is '..self.db.profile.maxHit[2]["hitAmount"].." against "..self.db.profile.maxHit[2]["creature"].." using "..self.db.profile.maxHit[2]["spell"])
-    self:Print('Third best hit is '..self.db.profile.maxHit[3]["hitAmount"].." against "..self.db.profile.maxHit[3]["creature"].." using "..self.db.profile.maxHit[3]["spell"])
+    for i = 1, 3, 1
+    do 
+        if self.db.profile.maxHit[i] then
+            if i == 1 then
+                self:Print('Max hit is '..reformatInt(self.db.profile.maxHit[i]["hitAmount"]).." against "..self.db.profile.maxHit[i]["creature"].." using "..self.db.profile.maxHit[i]["spell"])
+            else if i == 2 then
+                self:Print('2nd best hit is '..reformatInt(self.db.profile.maxHit[i]["hitAmount"]).." against "..self.db.profile.maxHit[i]["creature"].." using "..self.db.profile.maxHit[i]["spell"])
+            else if i == 3 then
+                self:Print('3rd best hit is '..reformatInt(self.db.profile.maxHit[i]["hitAmount"]).." against "..self.db.profile.maxHit[i]["creature"].." using "..self.db.profile.maxHit[i]["spell"])
+            end
+            end
+            end
+        end
+    end
 end
 
 
