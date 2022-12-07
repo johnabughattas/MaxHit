@@ -1,5 +1,6 @@
 MaxHit = LibStub("AceAddon-3.0"):NewAddon("MaxHit", "AceEvent-3.0", "AceConsole-3.0")
 
+-- default values for a character's DB
 local defaults = {
 	profile = {
 		maxHit = {},
@@ -8,6 +9,7 @@ local defaults = {
 	},
 }
 
+-- default values for options menu
 local options = {
 	name = "MaxHit",
 	handler = MaxHit,
@@ -21,6 +23,7 @@ local options = {
 	},
 }
 
+-- function to update otpions menu
 function CreateMessage(maxHit)
     if maxHit[1] == nil then
         options.args.msg.name = "No hits on record!"
@@ -39,7 +42,7 @@ function CreateMessage(maxHit)
     options.args.msg.name = message
 end
 
-
+-- function to print users max hits
 function MaxHitMessage(index, maxHit)
     local hitAmount = ReformatInt(maxHit["hitAmount"])
     local creature = maxHit["creature"]
@@ -53,15 +56,14 @@ function MaxHitMessage(index, maxHit)
     end
 end
 
--- helper function for printing our max hit values
+-- helper function for formatting max hit values
 -- i owe this cryptic bit of code to the good people of stackoverflow
 function ReformatInt(i)
     return tostring(i):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
 end
 
-
 function MaxHit:OnInitialize()
-    -- load database from previous play sessions
+    -- load database
     self.db = LibStub("AceDB-3.0"):New("MaxHitDB", defaults)
 
     -- load GUI 
@@ -84,10 +86,6 @@ function MaxHit:OnEnable()
     self:RegisterChatCommand("maxhit", "SlashCommand")
 end
 
-function MaxHit:OnDisable()
-    -- Called when the addon is disabled
-end
-
 function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
     -- store all relevant info of the current combat instance
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, spellSchool, amount = CombatLogGetCurrentEventInfo()
@@ -99,6 +97,7 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
 
     for i = 1, 3, 1
     do 
+        -- handles cases where current attack is greater than one of the maxes and 3 values are already stored
         if self.db.profile.maxHit[i] ~= nil and amount > self.db.profile.maxHit[i]["hitAmount"] then
                 if i == 1 then
                     self:Print("New max hit of "..ReformatInt(amount).." against "..destName.." using "..spellName.."!")
@@ -129,13 +128,13 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
                 end
 
                 -- update DB values
-
                 self.db.profile.maxHit[i]["spell"] = subevent == "SPELL_DAMAGE" and spellName or "auto-attack"
                 self.db.profile.maxHit[i]["hitAmount"] = amount
                 self.db.profile.maxHit[i]["creature"] = destName
 
                 CreateMessage(self.db.profile.maxHit)
                 return
+        -- handles cases where one of the 3 max hits is not yet stored
         elseif self.db.profile.maxHit[i] == nil then
             self.db.profile.maxHit[i] = {
                 hitAmount = amount,
@@ -151,7 +150,6 @@ end
 
 -- prints users max hits when they use the slash command /maxhit
 function MaxHit:SlashCommand()
-   --self.db.profile.maxHit = nil
    for i = 1, 3, 1 
    do
         if self.db.profile.maxHit[i] == nil then
