@@ -23,5 +23,6 @@ By hitting escape, you'll bring up a menu. Click on options, then on "addons". Y
 Click on "MaxHit" and you will see your max hits displayed.
 
 youtube: https://youtu.be/KvK8S7WVAXs
-github: https://github.com/johnabughattas/wow-addon
+
+github: https://github.com/johnabughattas/MaxHit
 
