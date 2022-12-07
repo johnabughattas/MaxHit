@@ -13,10 +13,12 @@ Clicking that button will show a list of all your installed addons and you shoul
 
 If you've properly installed WoW and Max Hit, then Max Hit will greet you by your character's name in the chatbox upon login. 
 (note: I added this greeting for fun, but no actual addon would do this since it would be incredibly annoying to be greeted by every addon you have installed)
+
 Go fight some enemies and Max Hit will let you know in the chatbox whenever you land a new biggest hit!
 It will also keep track of what ability you landed the attack with and against which enemy. 
 
-If you want to know what your current Max Hit is you can type "/maxhit" in the chatbox.
-
-GUI
+If you want to know what your current max hits is you can type "/maxhit" in the chatbox.
+Alternatively, you can access a GUI that will display your max hits.
+By hitting escape, you'll bring up a menu. Click on options, then on "addons". You should see a drop down menu with all your enabled addons.
+Click on "MaxHit" and you will see your max hits displayed.
 

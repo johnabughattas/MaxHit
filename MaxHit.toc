@@ -2,7 +2,7 @@
 ## Title: Max Hit
 ## Notes: A WoW Retail Addon to Track Your Biggest Attacks!
 ## Author: John Abughattas
-## Version: 0.1
+## Version: 1.0
 ## OptionalDeps: Ace3
 ## SavedVariables: MaxHitDB
 
