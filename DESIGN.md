@@ -17,6 +17,7 @@ An experienced WoW addon user would expect to be able to access an addon by a sl
 Variables are declared locally so as to avoid MaxHit clashing with other addons a user might have installed.
 There is a risk of some other addon having declared variables that share a name with my variables.
 Variables I need to use globally within my code are instead defined as part of the user profile. 
+I have tested MaxHit with other popular addons enabled to confirm that it does not effect any other addons.
 
 self:Print() is used in favor of print(), so that information displayed to the user in-game appears explciitly as coming from MaxHit
 

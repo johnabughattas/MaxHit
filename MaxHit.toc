@@ -1,6 +1,6 @@
 ## Interface: 100002
 ## Title: Max Hit
-## Notes: A WoW Retail Addon to Track Largest Hit by a Player
+## Notes: A WoW Retail Addon to Track Your Biggest Attacks!
 ## Author: John Abughattas
 ## Version: 0.1
 ## OptionalDeps: Ace3

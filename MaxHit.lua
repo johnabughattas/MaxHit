@@ -9,15 +9,48 @@ local defaults = {
 	},
 }
 
+local options = { 
+	name = "MaxHit",
+	handler = MaxHit,
+	type = "group",
+	args = {
+		msg = {
+			type = "description",
+			name = "Your top hits!",
+            fontSize = "large"
+		},
+	},
+}
+
+
+function createMessage(maxHit)
+    for i = 1, 3, 1 
+    do
+        if maxHit[i] == nil then
+            options.args.msg.name = "No hits on record!"
+            return
+        end
+    end
+
+	options.args.msg.name = "Max hit of "..maxHit[1]["hitAmount"].." against "..maxHit[1]["creature"].." using "..maxHit[1]["spell"].."!\n".."2nd best hit of "..maxHit[2]["hitAmount"].." against "..maxHit[2]["creature"].." using "..maxHit[2]["spell"].."!\n".."3rd best hit of "..maxHit[3]["hitAmount"].." against "..maxHit[3]["creature"].." using "..maxHit[3]["spell"].."!\n"
+end
+
+
 -- helper function for printing our max hit values
+-- i owe this cryptic bit of code to the good people of stackoverflow
 function reformatInt(i)
     return tostring(i):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
 end
+
 
 function MaxHit:OnInitialize()
     -- load database from previous play sessions
     self.db = LibStub("AceDB-3.0"):New("MaxHitDB", defaults)
 
+    -- load GUI 
+    LibStub("AceConfig-3.0"):RegisterOptionsTable("MaxHit", options)
+	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("MaxHit", "MaxHit")
+    createMessage(self.db.profile.maxHit)
 
     -- get the player's name and id, and greets them upon login
     self.db.profile.character_name = UnitName('player')
@@ -32,7 +65,6 @@ function MaxHit:OnEnable()
 
     -- enable slash commands (function defined below)
     self:RegisterChatCommand("maxhit", "SlashCommand")
-    self:RegisterChatCommand("maxhitoptions", "ChatCommand")
 end
 
 function MaxHit:OnDisable()
@@ -48,56 +80,58 @@ function MaxHit:COMBAT_LOG_EVENT_UNFILTERED()
         return
     end
 
-    -- if there is no attack currently stored, store this one as the max and alert the player
-    for i = 1, 3, 1 
-    do
-        if self.db.profile.maxHit[i] == nil then
+    for i = 1, 3, 1
+    do 
+        if self.db.profile.maxHit[i] ~= nil and amount > self.db.profile.maxHit[i]["hitAmount"] then
+                if i == 1 then
+                    self:Print("New max hit of "..reformatInt(amount).." against "..destName.." using "..spellName.."!")
+
+                    if self.db.profile.maxHit[2] ~= nil then
+                        self.db.profile.maxHit[3] = {
+                            hitAmount = self.db.profile.maxHit[2]["hitAmount"],
+                            creature = self.db.profile.maxHit[2]["creature"],
+                            spell = self.db.profile.maxHit[2]["spell"]
+                        }
+                    end
+
+                    self.db.profile.maxHit[2] = {
+                        hitAmount = self.db.profile.maxHit[1]["hitAmount"],
+                        creature = self.db.profile.maxHit[1]["creature"],
+                        spell = self.db.profile.maxHit[1]["spell"]
+                    }
+                elseif i == 2 then
+                    self:Print("New 2nd best hit of "..reformatInt(amount).." against "..destName.." using "..spellName.."!")
+
+                    self.db.profile.maxHit[3] = {
+                        hitAmount = self.db.profile.maxHit[2]["hitAmount"],
+                        creature = self.db.profile.maxHit[2]["creature"],
+                        spell = self.db.profile.maxHit[2]["spell"]
+                    }
+                else
+                    self:Print("New 3rd best hit of "..reformatInt(amount).." against "..destName.." using "..spellName.."!")
+                end
+
+                -- update DB values
+
+                if subevent == "SPELL_DAMAGE" then
+                    self.db.profile.maxHit[i]["spell"] = spellName
+                else
+                    self.db.profile.maxHit[i]["spell"] = "auto-attack"
+                end
+
+                self.db.profile.maxHit[i]["hitAmount"] = amount
+                self.db.profile.maxHit[i]["creature"] = destName
+
+                createMessage(self.db.profile.maxHit)
+                return
+        elseif self.db.profile.maxHit[i] == nil then
             self.db.profile.maxHit[i] = {
                 hitAmount = amount,
                 creature = destName,
                 spell = subevent == "SPELL_DAMACE" and spellName or "auto-attack"
-            } 
-
-                if i == 1 then
-                    self:Print("New max hit of "..reformatInt(amount).." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
-                    return
-                else if i == 2 then
-                    self:Print("New 2nd best hit of "..reformatInt(amount).." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
-                    return
-                else if i == 3 then
-                    self:Print("New 3rd best hit of "..reformatInt(amount).." against "..destName.." using "..self.db.profile.maxHit[i]["spell"].."!")
-                    return
-                end
-                end
-                end
-        end
-    end
-
-    -- if this attack is greater than the current max, store it and alert the player
-    for i = 1, 3, 1
-    do
-        if amount > self.db.profile.maxHit[i]["hitAmount"] then
-            self.db.profile.maxHit[i]["hitAmount"] = amount
-            self.db.profile.maxHit[i]["creature"] = destName
-    
-            if subevent == "SPELL_DAMAGE" then
-                self.db.profile.maxHit[i]["spell"] = spellName
-            else
-                self.db.profile.maxHit[i]["spell"] = "auto-attack"
-            end
-
-            if i == 1 then
-                self:Print("New max hit of "..reformatInt(amount).." against "..destName.."!")
-                return
-            else if i ==2 then
-                self:Print("New 2nd best hit of "..reformatInt(amount).." against "..destName.."!")
-                return
-            else if i == 3 then
-                self:Print("New 3rd best hit of "..reformatInt(amount).." against "..destName.."!")
-                return
-            end
-            end
-            end
+            }
+            createMessage(self.db.profile.maxHit)
+            return
         end
     end
 end
@@ -114,16 +148,14 @@ function MaxHit:SlashCommand()
     end
 
     for i = 1, 3, 1
-    do 
+    do
         if self.db.profile.maxHit[i] then
             if i == 1 then
                 self:Print('Max hit is '..reformatInt(self.db.profile.maxHit[i]["hitAmount"]).." against "..self.db.profile.maxHit[i]["creature"].." using "..self.db.profile.maxHit[i]["spell"])
-            else if i == 2 then
+            elseif i == 2 then
                 self:Print('2nd best hit is '..reformatInt(self.db.profile.maxHit[i]["hitAmount"]).." against "..self.db.profile.maxHit[i]["creature"].." using "..self.db.profile.maxHit[i]["spell"])
-            else if i == 3 then
+            else
                 self:Print('3rd best hit is '..reformatInt(self.db.profile.maxHit[i]["hitAmount"]).." against "..self.db.profile.maxHit[i]["creature"].." using "..self.db.profile.maxHit[i]["spell"])
-            end
-            end
             end
         end
     end
